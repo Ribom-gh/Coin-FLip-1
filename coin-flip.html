@@ -19,7 +19,7 @@
   .coins {
     display: flex;
     gap: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
   }
 
   .coin {
@@ -32,7 +32,6 @@
     justify-content: center;
     font-weight: bold;
     font-size: 16px;
-    cursor: pointer;
     backface-visibility: hidden;
     transition: transform 0.6s;
   }
@@ -52,11 +51,22 @@
     font-weight: bold;
   }
 
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .points {
     position: absolute;
     top: 20px;
     right: 20px;
     font-size: 20px;
+  }
+
+  .cooldown {
+    margin-top: 15px;
+    font-size: 18px;
+    color: #aaa;
   }
 </style>
 </head>
@@ -71,24 +81,36 @@
 </div>
 
 <button id="flipBtn">Flip</button>
+<div class="cooldown" id="cooldown"></div>
 
 <script>
-  const coins = [document.getElementById("coin1"), document.getElementById("coin2"), document.getElementById("coin3")];
+  const coins = [
+    document.getElementById("coin1"),
+    document.getElementById("coin2"),
+    document.getElementById("coin3")
+  ];
+
+  const flipBtn = document.getElementById("flipBtn");
   const pointsDisplay = document.getElementById("points");
+  const cooldownText = document.getElementById("cooldown");
+
   let points = 0;
   let flipping = false;
+  let cooldown = false;
 
-  document.getElementById("flipBtn").addEventListener("click", () => {
-    if (flipping) return;
+  flipBtn.addEventListener("click", () => {
+    if (flipping || cooldown) return;
+
     flipping = true;
+    flipBtn.disabled = true;
 
-    // pridáme flip efekt
-    coins.forEach(coin => {
-      coin.classList.add("flipping");
-    });
+    // flip efekt
+    coins.forEach(coin => coin.classList.add("flipping"));
 
     setTimeout(() => {
-      const results = coins.map(coin => Math.random() < 0.5 ? "red" : "green");
+      const results = coins.map(() =>
+        Math.random() < 0.5 ? "red" : "green"
+      );
 
       coins.forEach((coin, i) => {
         coin.classList.remove("flipping");
@@ -96,17 +118,38 @@
         coin.textContent = "";
       });
 
-      // kontrola, či sú všetky tri zelené
-      if (results.every(color => color === "green")) {
-        points += 1;
+      if (results.every(c => c === "green")) {
+        points++;
         pointsDisplay.textContent = points;
       }
 
       flipping = false;
-    }, 600); // rovnaká dĺžka ako CSS transition
+      startCooldown();
+    }, 600);
   });
+
+  function startCooldown() {
+    cooldown = true;
+    let timeLeft = 3;
+
+    cooldownText.textContent = `Next flip in: ${timeLeft}`;
+
+    const interval = setInterval(() => {
+      timeLeft--;
+      if (timeLeft > 0) {
+        cooldownText.textContent = `Next flip in: ${timeLeft}`;
+      } else {
+        clearInterval(interval);
+        cooldownText.textContent = "";
+        cooldown = false;
+        flipBtn.disabled = false;
+      }
+    }, 1000);
+  }
 </script>
 
 </body>
 </html>
+
+
 
